@@ -232,7 +232,7 @@ testes fornecidos passam sem alteração. Testes adicionais são considerados.
 
 ## Checklist
 
-* \[ ] O CLI roda com Python 3.11 (`PYTHONPATH=src python -m onfly\_report ...`).
+* \[V] O CLI roda com Python 3.11 (`PYTHONPATH=src python -m onfly\_report ...`).
 * \[ ] O comando de execução gera `output/report.json` sem erro.
 * \[ ] O relatório segue o contrato acima.
 * \[ ] `pytest -q` passa com os testes fornecidos.
