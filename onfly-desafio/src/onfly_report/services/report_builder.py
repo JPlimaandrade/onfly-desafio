@@ -39,7 +39,13 @@ class ReportBuilder:
 
     def build(self) -> dict:
         parser = RowParser()
-        reservations = [parser.parse(raw) for raw in self._reservation_repository.read()]
+
+        reservations = []
+        for raw in self._reservation_repository.read():
+            reservation = parser.parse(raw)
+            if reservation is not None:
+                reservations.append(reservation)
+
         rates = self._rate_repository.read()
 
         status_counts = {"CONFIRMED": 0, "CANCELLED": 0, "NO_SHOW": 0}
