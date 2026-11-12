@@ -44,8 +44,12 @@ class CsvReservationRepository:
                 rows: list[RawRow] = []
                 for values in reader:
                     rows.append(RawRow(line_number=reader.line_num, values=values))
-                    if len(rows) == 200:
-                        break
+                    """
+                    se o barramento de 200 linhas continuar aqui, isso fará com que o CLI 
+                    não busque todos os dados, gerando problemas, então resolvi remover 
+                    isso para que o programa leia todos os dados de reserva. 
+                    
+                    """
                 return rows
         except FileNotFoundError as err:
             raise InputFileError(f"arquivo de reservas não encontrado: {self._path}") from err
