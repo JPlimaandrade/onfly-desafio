@@ -1,0 +1,60 @@
+User prompt (11/13/2026 3:52 PM): 
+
+Analize o código por completo buscando por problemas/bugs de código exclusivamente.
+
+Response (11/13/2026 3:54 PM): 
+
+Resultado da análise: A suíte fornecida passa integralmente: 9 passed in 1.88s
+Foram encontrados 2 bugs de código confirmados: #/Severidade/Arquivo/Linhas/Problema/Confiança 
+-> 1 / 🟠 Alta / currency_converter.py e cli.py / currency_converter.py:9 cli.py:44-50 / Uma reserva com moeda sem taxa correspondente gera KeyError, tratado como erro inesperado, fazendo o CLI retornar código 1. Pelo contrato, entrada inválida deve retornar código 2. / 10 de 10.
+-> 2 / 🟡 Média / report_builder.py / 108-109 / generated_at usa diretamente o datetime recebido em now, sem garantir o offset fixo -03:00. Um datetime ingênuo gera timestamp sem offset; um timestamp em UTC preserva +00:00, violando o contrato. / 9 de 10.
+
+1. Taxa de câmbio ausente retorna código incorreto 
+Em currency_converter.py:
+rate = rates[currency]
+
+Quando a moeda da reserva não existe na tabela de taxas, ocorre KeyError. O CLI captura apenas InputFileError como erro de entrada; 
+portanto, o KeyError cai no except Exception e retorna 1.
+Reprodução:
+returncode=1
+KeyError: 'GBP'
+
+Esse caso deveria ser convertido em InputFileError, resultando em código de saída 2.
+
+2. generated_at pode violar o offset obrigatório
+O código usa:
+now = self._now or datetime.now(FIXED_OFFSET)
+"generated_at": now.isoformat(timespec="seconds")
+
+O caminho padrão do CLI usa corretamente FIXED_OFFSET, mas o parâmetro now permite produzir valores inválidos:
+2025-01-01T10:00:00
+
+Esse timestamp não possui -03:00. Também seria possível obter:
+2025-01-01T13:00:00+00:00
+
+O contrato exige que generated_at utilize sempre o offset fixo -03:00; portanto, o valor injetado deveria ser normalizado ou validado antes da serialização.
+
+Pontos analisados e considerados corretos
+Conversão monetária usa Decimal e multiplica pelo câmbio.
+Arredondamento ocorre apenas na serialização com ROUND_HALF_UP.
+Cálculo de noites usa diferença real entre datas.
+Reservas CANCELLED e NO_SHOW são excluídas dos totais faturáveis.
+Ranking de hotéis é ordenado por valor decrescente e hotel_id como desempate.
+Viradas de mês e ano são tratadas corretamente.
+Diretório de saída é criado quando necessário.
+Os registros com datas/quartos/valores inválidos são ignorados conforme os testes fornecidos.
+O dataset principal foi processado com sucesso: 300 reservas, 235 confirmadas e total de 396170.00 BRL.
+Nenhum arquivo foi alterado.
+
+User prompt (11/13/2026 3:57 PM): 
+
+ok, os dados de currency serão sempre estes, não alterarei mais código para aplicar uma resolução de algo que não vai acontecer, e sobre o report_builder.py é melhor deixar do jeito que está por se tratar de como o código foi feito, não irei alterar isto.
+
+Response (11/13/2026 3:57 PM): 
+
+Entendido. Nesse contexto:
+Não será feita alteração em currency_converter.py, pois as moedas do dataset são garantidamente suportadas.
+Não será feita alteração em report_builder.py, mantendo a implementação atual de generated_at.
+O código permanece sem modificações.
+A suíte fornecida continua passando: 9 testes aprovados.
+Assim, os dois pontos identificados ficam registrados como limitações teóricas fora do escopo atual, não como correções necessárias para este projeto.
