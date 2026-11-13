@@ -29,18 +29,17 @@ class RowParser:
             ou se for no mesmo dia, contar como um dia inteiro.
         """
 
-        checkin = date.fromisoformat((values.get("checkin_date") or "").strip())
-        checkout = date.fromisoformat((values.get("checkout_date") or "").strip())
-        rooms = int((values.get("rooms") or "").strip()) 
-
-        if checkout < checkin:
-            logger.warning("Checkout não pode ser menor que Checkin!")
-            return None
-        if rooms <= 0:
-            logger.warning("Não pode existir reserva com 0 ou menos quartos!")
-            return None
-    
         try:
+            checkin = date.fromisoformat((values.get("checkin_date") or "").strip())
+            checkout = date.fromisoformat((values.get("checkout_date") or "").strip())
+            rooms = int((values.get("rooms") or "").strip()) 
+            
+            if checkout < checkin:
+                logger.warning("Checkout não pode ser menor que Checkin! Linha %s", raw.line_number)
+                return None
+            if rooms <= 0:
+                logger.warning("Não pode existir reserva com 0 ou menos quartos! Linha %s", raw.line_number)
+                return None
             return Reservation(
                 reservation_id=(values.get("reservation_id") or "").strip(),
                 traveler_name=(values.get("traveler_name") or "").strip(),
