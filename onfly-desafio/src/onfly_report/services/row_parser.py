@@ -21,40 +21,49 @@ class RowParser:
 
     def parse(self, raw: RawRow) -> Reservation | None:
         values = raw.values
-        """
-            Se se o usuario fez checkin e saiu no mesmo dia, a validação dá problema e dias 
-            vão para 0, mas para não interferir nas regras de negóicio, vou apenas deixar o aviso!
-            
-            porém dava para colocar uma verificação para impedir que o checkout seja no mesmo dia do checkin
-            ou se for no mesmo dia, contar como um dia inteiro.
-        """
 
         try:
+            reservation_id=(values.get("reservation_id") or "").strip()
+            traveler_name=(values.get("traveler_name") or "").strip()
+            company_id=(values.get("company_id") or "").strip()
+            hotel_id=(values.get("hotel_id") or "").strip()
+            hotel_name=(values.get("hotel_name") or "").strip()
+            city=(values.get("city") or "").strip()
+            country=(values.get("country") or "").strip()
             checkin = date.fromisoformat((values.get("checkin_date") or "").strip())
             checkout = date.fromisoformat((values.get("checkout_date") or "").strip())
-            rooms = int((values.get("rooms") or "").strip()) 
+            rooms = int((values.get("rooms") or "").strip())
+            status=(values.get("status") or "").strip()
+            currency=(values.get("currency") or "").strip()
+            amount=Decimal((values.get("amount") or "").strip())
+            payment_method=(values.get("payment_method") or "").strip()
+
+            validacoes = [
+                (checkout < checkin, "Checkout deve ser posterior ao Checkin!"),
+                (rooms <= 0, "Não pode existir reserva com 0 ou menos quartos!"),
+                (amount < 0, "Valor da reserva deve ser positivo!"),
+            ]
             
-            if checkout < checkin:
-                logger.warning("Checkout não pode ser menor que Checkin! Linha %s", raw.line_number)
-                return None
-            if rooms <= 0:
-                logger.warning("Não pode existir reserva com 0 ou menos quartos! Linha %s", raw.line_number)
-                return None
+            for invalido, mensagem in validacoes:
+                if invalido:
+                    logger.warning("%s Linha %s", mensagem, raw.line_number)
+                    return None
+
             return Reservation(
-                reservation_id=(values.get("reservation_id") or "").strip(),
-                traveler_name=(values.get("traveler_name") or "").strip(),
-                company_id=(values.get("company_id") or "").strip(),
-                hotel_id=(values.get("hotel_id") or "").strip(),
-                hotel_name=(values.get("hotel_name") or "").strip(),
-                city=(values.get("city") or "").strip(),
-                country=(values.get("country") or "").strip(),
+                reservation_id=reservation_id,
+                traveler_name=traveler_name,
+                company_id=company_id,
+                hotel_id=hotel_id,
+                hotel_name=hotel_name,
+                city=city,
+                country=country,
                 checkin=checkin,
                 checkout=checkout,
                 rooms=rooms,
-                status=(values.get("status") or "").strip(),
-                currency=(values.get("currency") or "").strip(),
-                amount=Decimal((values.get("amount") or "").strip()),
-                payment_method=(values.get("payment_method") or "").strip(),
+                status=status,
+                currency=currency,
+                amount=amount,
+                payment_method=payment_method,
                 line_number=raw.line_number,
             )
         except (ValueError, InvalidOperation) as err:
